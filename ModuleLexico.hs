@@ -28,3 +28,4 @@ identifier    = T.identifier lexico
 stringLiteral = T.stringLiteral lexico
 commaSep      = T.commaSep lexico
 reserved      = T.reserved lexico
+braces        = T.braces lexico

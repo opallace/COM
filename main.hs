@@ -8,9 +8,10 @@ import ModuleExpr
 import ModuleExprL
 import ModuleExprR
 import ModuleVar
+import ModuleFuncao
 
-partida :: Parsec String u Var
-partida = do {e <- var; eof; return e}
+partida :: Parsec String u Funcao
+partida = do {e <- funcao; eof; return e}
 
 parserE = runParser partida [] "Programa"
 

@@ -1,1 +1,1 @@
-void minhapika
+void minhafunc(int a, int b, string c)
