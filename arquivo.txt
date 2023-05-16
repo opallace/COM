@@ -1,1 +1,1 @@
-void minhafunc(int a, int b, string c)
+(teste, [int var, int var2], {})

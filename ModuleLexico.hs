@@ -13,7 +13,7 @@ lingDef = emptyDef
             , T.commentEnd      = "-}"
             , T.commentLine     = "--"
             , T.reservedOpNames = ["+", "-", "/", "*", "<", ">", "<=", ">=", "==", "/=", "&&", "||", "!"]
-            , T.reservedNames   = ["return", "if", "while", "=", "print", "read"]
+            , T.reservedNames   = ["return", "if", "while", "=", "print", "read", "else", ";"]
             , T.identStart      = letter <|> char '_'
             , T.identLetter     = alphaNum <|> char '_' 
           }
@@ -29,3 +29,4 @@ stringLiteral = T.stringLiteral lexico
 commaSep      = T.commaSep lexico
 reserved      = T.reserved lexico
 braces        = T.braces lexico
+comma         = T.comma lexico

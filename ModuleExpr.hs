@@ -27,7 +27,10 @@ fator = parens expr
                      Left natural -> return (Const (CInt natural))
                      Right float  -> return (Const (CDouble float))
               }
-
+       <|> do{
+              i <- stringLiteral;
+              return (Lit i)
+              }
        <|> try(do {
               i <- identifier;
               b <- parens (commaSep expr);
@@ -36,9 +39,5 @@ fator = parens expr
        <|> do{
               i <- identifier;
               return (IdVar i)
-              }
-       <|> do{
-              i <- stringLiteral;
-              return (Lit i)
               }
        <?> "expression"

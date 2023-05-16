@@ -50,7 +50,7 @@ data Funcao   = Id :->: ([Var], Type)
 
 data Programa = Prog [Funcao] [(Id,[Var],Bloco)] [Var] Bloco 
                 deriving Show
-                
+
 type Bloco    = [Comando]
 
 data Comando  = If ExprL Bloco Bloco

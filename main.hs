@@ -4,14 +4,10 @@ import qualified Text.Parsec.Token as T
 import Text.Parsec.Language
 
 import ModuleDataTypes
-import ModuleExpr
-import ModuleExprL
-import ModuleExprR
-import ModuleVar
-import ModuleFuncao
+import ModulePrograma
 
-partida :: Parsec String u Funcao
-partida = do {e <- funcao; eof; return e}
+partida :: Parsec String u Programa
+partida = do {e <- programa; eof; return e}
 
 parserE = runParser partida [] "Programa"
 
