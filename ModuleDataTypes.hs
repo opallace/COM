@@ -45,10 +45,10 @@ data ExprL    = ExprL :&: ExprL
 data Var      = Id :#: Type                                    
                 deriving Show
 
-data Funcao   = Id :->: (Id, [Var], Bloco)                          
+data Funcao   = Id :->: ([Var], Type)                          
                 deriving Show
 
-data Programa = Prog [Funcao] Bloco 
+data Programa = Prog [Funcao] [(Id,[Var],Bloco)] [Var] Bloco 
                 deriving Show
                 
 type Bloco    = [Comando]

@@ -5,9 +5,12 @@ import Text.Parsec.Language
 
 import ModuleDataTypes
 import ModuleExpr
+import ModuleExprL
+import ModuleExprR
+import ModuleVar
 
-partida :: Parsec String u Expr
-partida = do {e <- expr; eof; return e}
+partida :: Parsec String u Var
+partida = do {e <- var; eof; return e}
 
 parserE = runParser partida [] "Programa"
 

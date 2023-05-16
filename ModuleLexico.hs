@@ -27,3 +27,4 @@ reservedOp    = T.reservedOp lexico
 identifier    = T.identifier lexico
 stringLiteral = T.stringLiteral lexico
 commaSep      = T.commaSep lexico
+reserved      = T.reserved lexico
