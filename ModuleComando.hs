@@ -11,18 +11,24 @@ import ModuleExprL
 import ModuleExpr
 
 bloco = do{
-                b <- braces (many comando);
-                return (b)
-              }
+            b <- many comando;
+            return (b)
+        }
         <?> "expression"
 
 comando =   do{
                 reserved "if";
                 e  <- parens exprL;
-                b1 <- bloco;
+                b1 <- braces bloco;
                 reserved "else";
-                b2 <- bloco;
+                b2 <- braces bloco;
                 return(If e b1 b2)
+              }
+        <|>do{
+                reserved "if";
+                e  <- parens exprL;
+                b1 <- braces bloco;
+                return(If e b1 [])
               }
         <|> do{
                 reserved "while";

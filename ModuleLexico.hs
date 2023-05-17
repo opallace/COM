@@ -30,3 +30,4 @@ commaSep      = T.commaSep lexico
 reserved      = T.reserved lexico
 braces        = T.braces lexico
 comma         = T.comma lexico
+brackets      = T.brackets lexico

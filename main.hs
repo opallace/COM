@@ -15,6 +15,7 @@ parserExpr s = case parserE s of
                      Left er -> print er
                      Right v -> print v
 
-main = do putStr "Arquivo: "
+main = do 
           e <- readFile "arquivo.txt"
+          putStr "Arquivo: "
           parserExpr e

@@ -6,16 +6,30 @@ import Text.Parsec.Language
 
 import ModuleDataTypes
 import ModuleLexico
+import ModuleComando
 
+bloco_var = do{
+                v <- many declaracao_var;
+                b <- bloco;
+                
+                return (concat v, b)
+            }
 
-var = do {
+declaracao_var = do {
+                t <- tipo;
+                i <- commaSep identifier;
+                reserved ";";
+                return (map (:#: t) i)
+              }
+       <?> "expression"
+
+declaracao_parametros = do {
                 t <- tipo;
                 i <- identifier;
                 return (i :#: t)
               }
        <?> "expression"
        
-
 tipo =      do {reserved "int"   ; return TInt}
         <|> do {reserved "double"; return TDouble}
         <|> do {reserved "string"; return TString}
