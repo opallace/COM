@@ -33,7 +33,7 @@ comando =   do{
         <|> do{
                 reserved "while";
                 e <- parens exprL;
-                b <- bloco;
+                b <- braces bloco;
                 return(While e b)
               }
         <|> do{
@@ -44,13 +44,13 @@ comando =   do{
               }
         <|> do{
                 reserved "print";
-                i <- parens identifier;
+                i <- parens expr;
                 reserved ";";
-                return (Leitura i)
+                return (Imp i)
               }
         <|> do{
                 reserved "return";
-                i <- optionMaybe (parens expr);
+                i <- optionMaybe expr;
                 reserved ";";
                 return (Ret (i))
               }

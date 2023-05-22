@@ -16,6 +16,6 @@ parserExpr s = case parserE s of
                      Right v -> print v
 
 main = do 
-          e <- readFile "arquivo.txt"
+          e <- readFile "teste.txt"
           putStr "Arquivo: "
           parserExpr e
