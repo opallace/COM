@@ -17,8 +17,19 @@ int fat (int n)
     f = f * n;
     n = n - 1;
   }
+
+  for(i = 0; i < f; i = i + 1){
+    f = f * n;
+  }
+
+
+  do{
+    n = n - 1;
+  }while(a > b);
+
   return f;
 }
+
    
 
 void imprimir(string s, double r)
