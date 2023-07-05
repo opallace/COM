@@ -92,6 +92,14 @@ comando =   do{
                 reserved ";";
                 return[(Atrib i e)]
               })
+
+        <|> try(do{
+                  i <- identifier;
+                  reserved "++";
+                  reserved ";";
+                  return[(Atrib i (IdVar i :+: Const (CInt 1)))]
+
+               })
         <|> do{
                 i <- identifier;
                 p <- parens (commaSep expr);

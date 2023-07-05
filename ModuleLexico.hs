@@ -13,7 +13,7 @@ lingDef = emptyDef
             , T.commentEnd      = "-}"
             , T.commentLine     = "--"
             , T.reservedOpNames = ["+", "-", "/", "*", "<", ">", "<=", ">=", "==", "/=", "&&", "||", "!"]
-            , T.reservedNames   = ["return", "if", "while", "=", "print", "read", "else", ";", "do", "for"]
+            , T.reservedNames   = ["return", "if", "while", "=", "print", "read", "else", ";", "do", "for", "++"]
             , T.identStart      = letter <|> char '_'
             , T.identLetter     = alphaNum <|> char '_' 
           }

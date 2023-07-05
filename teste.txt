@@ -1,6 +1,8 @@
 double maior (double a, double b)
 {
   int m;
+
+  
   
   if (a > b) {m = a;}
   else {m = b;}
@@ -24,7 +26,8 @@ int fat (int n)
 
 
   do{
-    n = n - 1;
+    w++;
+    w = w + 1;
   }while(a > b);
 
   return f;
