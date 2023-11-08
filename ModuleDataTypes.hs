@@ -26,6 +26,8 @@ data Expr     = Expr :+: Expr
               | IdVar Id 
               | Chamada Id [Expr] 
               | Lit String 
+              | IntDouble Expr 
+              | DoubleInt Expr
                 deriving Show
 
 data ExprR    = Expr :==: Expr  
@@ -62,3 +64,4 @@ data Comando  = If ExprL Bloco Bloco
               | Ret (Maybe Expr)
               | Proc Id [Expr]
               deriving Show
+
