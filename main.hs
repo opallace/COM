@@ -5,15 +5,15 @@ import Text.Parsec.Language
 
 import ModuleDataTypes
 import ModulePrograma
+import ModuleSemanticPrograma
 
 partida :: Parsec String u Programa
 partida = do {e <- programa; eof; return e}
 
-parserE = runParser partida [] "Programa"
+parserE   = runParser partida [] "Programa"
 
-parserExpr s = case parserE s of
-                     Left er -> print er
-                     Right v -> print v
+parserExpr s = let (a, erro, prog) = verificaPrograma (parserE s)
+               in print erro
 
 main = do 
           e <- readFile "teste.txt"
