@@ -1,8 +1,7 @@
 double maior (double a, double b)
 {
   int m;
-
-  
+  int m;
   
   if (a > b) {m = a;}
   else {m = b;}
@@ -12,6 +11,7 @@ double maior (double a, double b)
 int fat (int n)
 {
   int f;
+  int f;
   
   f = 0;
   while (n > 0)
@@ -19,20 +19,8 @@ int fat (int n)
     f = f * n;
     n = n - 1;
   }
-
-  for(i = 0; i < f; i = i + 1){
-    f = f * n;
-  }
-
-
-  do{
-    w++;
-    w = w + 1;
-  }while(a > b);
-
   return f;
 }
-
    
 
 void imprimir(string s, double r)
@@ -47,7 +35,6 @@ void imprimir(string s, double r)
 {
   int x, num;
   double a;
-  int x;
   
   print("Numero:");
   read (num);

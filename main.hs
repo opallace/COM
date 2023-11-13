@@ -14,6 +14,7 @@ parserE   = runParser partida [] "Programa"
 
 parserExpr s = case parserE s of
                     Left er -> print er
+                    -- Right v -> print v
                     Right s -> case verificaPrograma s of
                                     MS(erro, prog) -> do putStr erro
                                                          print prog
