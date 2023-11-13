@@ -22,8 +22,16 @@ instance Applicative M where
 instance Monad M where
     MS m >>= f = let(s, a) = m in let MS(s', b) = f a in MS (s++s', b)
 
+-- passar vars para expr para verificar existencia e tipo de variaveis em expr
+verificaExpr [] (IdVar id) = erro("Variavel não encontrada\n")(TVoid, IdVar id)
+verificaExpr (i:#:t):vars (IdVar id) 
+    | i == id then pure(t, IdVar id)
+    | otherwise =  verificaExpr vars (IdVar id)
 verificaExpr (Const (CInt x))    = pure(Const (CInt x), TInt)
 verificaExpr (Const (CDouble x)) = pure(Const (CDouble x), TDouble)
+verificaExpr (Neg e) =
+    do  (e', t) <- verificaExpr e
+        pure(Neg e', t)
 verificaExpr (e1:+:e2) = 
     do  (e1', t1) <- verificaExpr e1
         (e2', t2) <- verificaExpr e2
@@ -156,20 +164,54 @@ verificaExprR (e1:>=:e2) =
                 (_, TVoid)         -> erro("Tipo Void não compativel com a operação\n")(e1' :>=: e2', TVoid)
                 (TVoid, _)         -> erro("Tipo Void não compativel com a operação\n")(e1' :>=: e2', TVoid)
 
-verificaComandos (If e bl1 bl2) =
-verificaComandos (While el bl) = 
-verificaComandos (DoWhile el bl) = 
-verificaComandos (Atrib id e) = 
-verificaComandos (Leitura id) = 
-verificaComandos (Imp e) =
-verificaComandos (Ret (Maybe e)) =
-verificaComandos (Proc id exprs) =   
+verificaExprL (el1:&:el2) =
+    do  el1' <- verificaExprL el1
+        el2' <- verificaExprL el2
+        pure(el1' :&: el2')
+verificaExprL (el1:|:el2) =
+    do  el1' <- verificaExprL el1
+        el2' <- verificaExprL el2
+        pure(el1' :|: el2')
+verificaExprL (Not el) =
+    do  el' <- verificaExprL el
+        pure(Not el')
+verificaExprL (Rel er) =
+    do  (er', t) <- verificaExprR er
+        pure(Rel er')
+
+verificaComandos cabecalho_funcoes vars (If el bl1 bl2) = 
+    do  el' <- verificaExprL el
+        bl1' <- mapM (verificaComandos cabecalho_funcoes vars) bl1
+        bl2' <- mapM (verificaComandos cabecalho_funcoes vars) bl2
+        pure(If el' bl1' bl2')
+verificaComandos cabecalho_funcoes vars (While el bl) = 
+    do  el' <- verificaExprL el
+        bl' <- mapM (verificaComandos cabecalho_funcoes vars) bl
+        pure(While el' bl')
+verificaComandos cabecalho_funcoes vars (DoWhile el bl) = 
+    do  el' <- verificaExprL el
+        bl' <- mapM (verificaComandos cabecalho_funcoes vars) bl
+        pure(DoWhile el' bl')
+verificaComandos cabecalho_funcoes vars (Atrib id e) = 
+    do  (e1, t1) <- verificaExpr (IdVar id)
+        (e2, t2) <- verificaExpr e
+
+        case (t1, t2) of
+            (TInt,TInt) -> pure (Atrib id e2)
+            (TDouble, TDouble) -> pure (Atrib id e2)
+            (TString,TString) -> pure (Atrib id e2)
+            
+
+-- verificaComandos cabecalho_funcoes (Leitura id) = 
+-- verificaComandos cabecalho_funcoes (Imp e) =
+-- verificaComandos cabecalho_funcoes (Ret (Maybe e)) =
+-- verificaComandos cabecalho_funcoes (Proc id exprs) =   
 
 verificaBloco cabecalho_funcoes vars comandos =
     do if verificaVariaveisDuplicadas vars then erro("Variaveis duplicadas\n")(vars,comandos) 
         else 
-            cmd <- verificaComandos comandos
-            pure(vars, cmd)
+            do  cmd <- mapM (verificaComandos cabecalho_funcoes vars) comandos 
+                pure(vars, cmd)
 
 verificaBlocoFuncao cabecalho_funcoes [] = pure([])
 verificaBlocoFuncao cabecalho_funcoes ((id, vars, bloco):funcoes) = 
