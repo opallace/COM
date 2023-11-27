@@ -11,7 +11,7 @@ data Type     = TDouble
               | TInt            
               | TString       
               | TVoid 
-                deriving Show 
+                deriving (Show, Eq)
 
 data TCons    = CDouble Double  
               | CInt Integer           

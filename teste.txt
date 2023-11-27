@@ -1,16 +1,13 @@
-double maior (double a, double b)
-{
-  int m;
+double maior (double a, double b){
   int m;
   
   if (a > b) {m = a;}
   else {m = b;}
-  return b;
+  return m;
 }
 
 int fat (int n)
 {
-  int f;
   int f;
   
   f = 0;
@@ -19,17 +16,14 @@ int fat (int n)
     f = f * n;
     n = n - 1;
   }
-  return f;
 }
    
 
 void imprimir(string s, double r)
 {
-  int s;
   
-  print (s);
-  print (r);
-  return 0;
+  print(s);
+  print(r);
 }
 
 {
@@ -41,5 +35,4 @@ void imprimir(string s, double r)
   x = fat (4);
   a = maior (2.5, 10);
   imprimir("teste:", 2);
-  return 0;
 }
