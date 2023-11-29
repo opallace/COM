@@ -44,7 +44,7 @@ data ExprL    = ExprL :&: ExprL
               | Rel ExprR 
                 deriving Show
 
-data Var      = Id :#: Type                                    
+data Var      = Id :#: (Type, Int)                                   
                 deriving Show
 
 data Funcao   = Id :->: ([Var], Type)                          

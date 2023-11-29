@@ -22,26 +22,26 @@ instance Applicative M where
 instance Monad M where
     MS m >>= f = let(s, a) = m in let MS(s', b) = f a in MS (s++s', b)
 
-verificaExpr tfuns [] (IdVar id) = erro("Variavel "++id++" não encontrada.\n") (IdVar id, TVoid)
-verificaExpr tfuns ((i:#:t):tvars) (IdVar id) =
+verExpr tfuns [] (IdVar id) = erro("Variavel "++id++" não encontrada.\n") (IdVar id, TVoid)
+verExpr tfuns ((i:#:(t, _)):tvars) (IdVar id) =
     if i == id then pure (IdVar id, t)
-    else verificaExpr tfuns tvars (IdVar id)
-verificaExpr tfuns tvars (Const (CInt x))    = pure (Const (CInt x), TInt)
-verificaExpr tfuns tvars (Const (CDouble x)) = pure (Const (CDouble x), TDouble)
-verificaExpr tfuns tvars (Lit s)    = pure (Lit s , TString)
-verificaExpr tfuns tvars (IntDouble x)       = pure (IntDouble x, TDouble)
-verificaExpr tfuns tvars (DoubleInt x)       = pure (DoubleInt x, TDouble)
-verificaExpr tfuns tvars (Neg e) =
-    do  (e', t) <- verificaExpr tfuns tvars e
+    else verExpr tfuns tvars (IdVar id)
+verExpr tfuns tvars (Const (CInt x))    = pure (Const (CInt x), TInt)
+verExpr tfuns tvars (Const (CDouble x)) = pure (Const (CDouble x), TDouble)
+verExpr tfuns tvars (Lit s)    = pure (Lit s , TString)
+verExpr tfuns tvars (IntDouble x)       = pure (IntDouble x, TDouble)
+verExpr tfuns tvars (DoubleInt x)       = pure (DoubleInt x, TDouble)
+verExpr tfuns tvars (Neg e) =
+    do  (e', t) <- verExpr tfuns tvars e
         pure (Neg e', t)
-verificaExpr tfuns tvars (Chamada id exprs) =
-    do  exprs' <- mapM (verificaExpr tfuns tvars) exprs
+verExpr tfuns tvars (Chamada id exprs) =
+    do  exprs' <- mapM (verExpr tfuns tvars) exprs
         (i, argumentos_esperados, t) <- recuperaFuncao tfuns id
-        argumentos_verificados <- verificaArgumentos id argumentos_esperados exprs'
+        argumentos_verificados <- verArgs id argumentos_esperados exprs'
         pure (Chamada id argumentos_verificados, t)
-verificaExpr tfuns tvars (e1:+:e2) =
-    do  (e1', t1) <- verificaExpr tfuns tvars e1
-        (e2', t2) <- verificaExpr tfuns tvars e2
+verExpr tfuns tvars (e1:+:e2) =
+    do  (e1', t1) <- verExpr tfuns tvars e1
+        (e2', t2) <- verExpr tfuns tvars e2
 
         case (t1, t2) of
             (TInt, TInt)       -> pure (e1' :+: e2', TInt)
@@ -52,9 +52,9 @@ verificaExpr tfuns tvars (e1:+:e2) =
             (_, TString)       -> erro "Tipo String não compativel com a operação.\n" (e1' :+: e2', TString)
             (_, TVoid)         -> erro "Tipo Void não compativel com a operação.\n" (e1' :+: e2', TVoid)
             (TVoid, _)         -> erro "Tipo Void não compativel com a operação.\n" (e1' :+: e2', TVoid)
-verificaExpr tfuns tvars (e1:-:e2) =
-    do  (e1', t1) <- verificaExpr tfuns tvars e1
-        (e2', t2) <- verificaExpr tfuns tvars e2
+verExpr tfuns tvars (e1:-:e2) =
+    do  (e1', t1) <- verExpr tfuns tvars e1
+        (e2', t2) <- verExpr tfuns tvars e2
 
         case (t1, t2) of
             (TInt, TInt) -> pure (e1' :-: e2', TInt)
@@ -65,9 +65,9 @@ verificaExpr tfuns tvars (e1:-:e2) =
             (_, TString)       -> erro "Tipo String não compativel com a operação.\n" (e1' :-: e2', TString)
             (_, TVoid)         -> erro "Tipo Void não compativel com a operação.\n" (e1' :-: e2', TVoid)
             (TVoid, _)         -> erro "Tipo Void não compativel com a operação.\n" (e1' :-: e2', TVoid)
-verificaExpr tfuns tvars (e1:*:e2) =
-    do  (e1', t1) <- verificaExpr tfuns tvars e1
-        (e2', t2) <- verificaExpr tfuns tvars e2
+verExpr tfuns tvars (e1:*:e2) =
+    do  (e1', t1) <- verExpr tfuns tvars e1
+        (e2', t2) <- verExpr tfuns tvars e2
 
         case (t1, t2) of
             (TInt, TInt) -> pure (e1' :*: e2', TInt)
@@ -78,9 +78,9 @@ verificaExpr tfuns tvars (e1:*:e2) =
             (_, TString)       -> erro "Tipo String não compativel com a operação.\n" (e1' :*: e2', TString)
             (_, TVoid)         -> erro "Tipo Void não compativel com a operação.\n" (e1' :*: e2', TVoid)
             (TVoid, _)         -> erro "Tipo Void não compativel com a operação.\n" (e1' :*: e2', TVoid)
-verificaExpr tfuns tvars (e1:/:e2) =
-    do  (e1', t1) <- verificaExpr tfuns tvars e1
-        (e2', t2) <- verificaExpr tfuns tvars e2
+verExpr tfuns tvars (e1:/:e2) =
+    do  (e1', t1) <- verExpr tfuns tvars e1
+        (e2', t2) <- verExpr tfuns tvars e2
 
         case (t1, t2) of
             (TInt, TInt) -> pure (e1' :/: e2', TInt)
@@ -92,9 +92,9 @@ verificaExpr tfuns tvars (e1:/:e2) =
             (_, TVoid)         -> erro "Tipo Void não compativel com a operação.\n" (e1' :/: e2', TVoid)
             (TVoid, _)         -> erro "Tipo Void não compativel com a operação.\n" (e1' :/: e2', TVoid)
 
-verificaExprR tfuns tvars (e1:==:e2) =
-    do  (e1', t1) <- verificaExpr tfuns tvars e1
-        (e2', t2) <- verificaExpr tfuns tvars e2
+verExprR tfuns tvars (e1:==:e2) =
+    do  (e1', t1) <- verExpr tfuns tvars e1
+        (e2', t2) <- verExpr tfuns tvars e2
 
         case (t1, t2) of
                 (TInt, TInt) -> pure (e1' :==: e2', TInt)
@@ -105,9 +105,9 @@ verificaExprR tfuns tvars (e1:==:e2) =
                 (_, TString)       -> erro "Tipo String não compativel com a operação.\n" (e1' :==: e2', TString)
                 (_, TVoid)         -> erro "Tipo Void não compativel com a operação.\n" (e1' :==: e2', TVoid)
                 (TVoid, _)         -> erro "Tipo Void não compativel com a operação.\n" (e1' :==: e2', TVoid)
-verificaExprR tfuns tvars (e1:/=:e2) =
-    do  (e1', t1) <- verificaExpr tfuns tvars e1
-        (e2', t2) <- verificaExpr tfuns tvars e2
+verExprR tfuns tvars (e1:/=:e2) =
+    do  (e1', t1) <- verExpr tfuns tvars e1
+        (e2', t2) <- verExpr tfuns tvars e2
 
         case (t1, t2) of
                 (TInt, TInt) -> pure (e1' :/=: e2', TInt)
@@ -118,9 +118,9 @@ verificaExprR tfuns tvars (e1:/=:e2) =
                 (_, TString)       -> erro "Tipo String não compativel com a operação.\n" (e1' :/=: e2', TString)
                 (_, TVoid)         -> erro "Tipo Void não compativel com a operação.\n" (e1' :/=: e2', TVoid)
                 (TVoid, _)         -> erro "Tipo Void não compativel com a operação.\n" (e1' :/=: e2', TVoid)
-verificaExprR tfuns tvars (e1:<:e2) =
-    do  (e1', t1) <- verificaExpr tfuns tvars e1
-        (e2', t2) <- verificaExpr tfuns tvars e2
+verExprR tfuns tvars (e1:<:e2) =
+    do  (e1', t1) <- verExpr tfuns tvars e1
+        (e2', t2) <- verExpr tfuns tvars e2
 
         case (t1, t2) of
                 (TInt, TInt) -> pure (e1' :<: e2', TInt)
@@ -131,9 +131,9 @@ verificaExprR tfuns tvars (e1:<:e2) =
                 (_, TString)       -> erro "Tipo String não compativel com a operação.\n" (e1' :<: e2', TString)
                 (_, TVoid)         -> erro "Tipo Void não compativel com a operação.\n" (e1' :<: e2', TVoid)
                 (TVoid, _)         -> erro "Tipo Void não compativel com a operação.\n" (e1' :<: e2', TVoid)
-verificaExprR tfuns tvars (e1:>:e2) =
-    do  (e1', t1) <- verificaExpr tfuns tvars e1
-        (e2', t2) <- verificaExpr tfuns tvars e2
+verExprR tfuns tvars (e1:>:e2) =
+    do  (e1', t1) <- verExpr tfuns tvars e1
+        (e2', t2) <- verExpr tfuns tvars e2
 
         case (t1, t2) of
                 (TInt, TInt) -> pure (e1' :>: e2', TInt)
@@ -144,9 +144,9 @@ verificaExprR tfuns tvars (e1:>:e2) =
                 (_, TString)       -> erro "Tipo String não compativel com a operação.\n" (e1' :>: e2', TString)
                 (_, TVoid)         -> erro "Tipo Void não compativel com a operação.\n" (e1' :>: e2', TVoid)
                 (TVoid, _)         -> erro "Tipo Void não compativel com a operação.\n" (e1' :>: e2', TVoid)
-verificaExprR tfuns tvars (e1:<=:e2) =
-    do  (e1', t1) <- verificaExpr tfuns tvars e1
-        (e2', t2) <- verificaExpr tfuns tvars e2
+verExprR tfuns tvars (e1:<=:e2) =
+    do  (e1', t1) <- verExpr tfuns tvars e1
+        (e2', t2) <- verExpr tfuns tvars e2
 
         case (t1, t2) of
                 (TInt, TInt) -> pure (e1' :<=: e2', TInt)
@@ -157,9 +157,9 @@ verificaExprR tfuns tvars (e1:<=:e2) =
                 (_, TString)       -> erro "Tipo String não compativel com a operação.\n" (e1' :<=: e2', TString)
                 (_, TVoid)         -> erro "Tipo Void não compativel com a operação.\n" (e1' :<=: e2', TVoid)
                 (TVoid, _)         -> erro "Tipo Void não compativel com a operação.\n" (e1' :<=: e2', TVoid)
-verificaExprR tfuns tvars (e1:>=:e2) =
-    do  (e1', t1) <- verificaExpr tfuns tvars e1
-        (e2', t2) <- verificaExpr tfuns tvars e2
+verExprR tfuns tvars (e1:>=:e2) =
+    do  (e1', t1) <- verExpr tfuns tvars e1
+        (e2', t2) <- verExpr tfuns tvars e2
 
         case (t1, t2) of
                 (TInt, TInt) -> pure (e1' :>=: e2', TInt)
@@ -171,37 +171,37 @@ verificaExprR tfuns tvars (e1:>=:e2) =
                 (_, TVoid)         -> erro "Tipo Void não compativel com a operação.\n" (e1' :>=: e2', TVoid)
                 (TVoid, _)         -> erro "Tipo Void não compativel com a operação.\n" (e1' :>=: e2', TVoid)
 
-verificaExprL tfuns tvars (el1:&:el2) =
-    do  el1' <- verificaExprL tfuns tvars el1
-        el2' <- verificaExprL tfuns tvars el2
+verExprL tfuns tvars (el1:&:el2) =
+    do  el1' <- verExprL tfuns tvars el1
+        el2' <- verExprL tfuns tvars el2
         pure (el1' :&: el2')
-verificaExprL tfuns tvars (el1:|:el2) =
-    do  el1' <- verificaExprL tfuns tvars el1
-        el2' <- verificaExprL tfuns tvars el2
+verExprL tfuns tvars (el1:|:el2) =
+    do  el1' <- verExprL tfuns tvars el1
+        el2' <- verExprL tfuns tvars el2
         pure (el1' :|: el2')
-verificaExprL tfuns tvars (Not el) =
-    do  el' <- verificaExprL tfuns tvars el
+verExprL tfuns tvars (Not el) =
+    do  el' <- verExprL tfuns tvars el
         pure (Not el')
-verificaExprL tfuns tvars (Rel er) =
-    do  (er', t) <- verificaExprR tfuns tvars er
+verExprL tfuns tvars (Rel er) =
+    do  (er', t) <- verExprR tfuns tvars er
         pure (Rel er')
 
-verificaComandos tfuns tvars f (If el bl1 bl2) =
-    do  el' <- verificaExprL tfuns tvars el
-        bl1' <- mapM (verificaComandos tfuns tvars f) bl1
-        bl2' <- mapM (verificaComandos tfuns tvars f) bl2
+verCmd tfuns tvars f (If el bl1 bl2) =
+    do  el' <- verExprL tfuns tvars el
+        bl1' <- mapM (verCmd tfuns tvars f) bl1
+        bl2' <- mapM (verCmd tfuns tvars f) bl2
         pure (If el' bl1' bl2')
-verificaComandos tfuns tvars f (While el bl) =
-    do  el' <- verificaExprL tfuns tvars el
-        bl' <- mapM (verificaComandos tfuns tvars f) bl
+verCmd tfuns tvars f (While el bl) =
+    do  el' <- verExprL tfuns tvars el
+        bl' <- mapM (verCmd tfuns tvars f) bl
         pure (While el' bl')
-verificaComandos tfuns tvars f (DoWhile el bl) =
-    do  el' <- verificaExprL tfuns tvars el
-        bl' <- mapM (verificaComandos tfuns tvars f) bl
+verCmd tfuns tvars f (DoWhile el bl) =
+    do  el' <- verExprL tfuns tvars el
+        bl' <- mapM (verCmd tfuns tvars f) bl
         pure (DoWhile el' bl')
-verificaComandos tfuns tvars f (Atrib id e) =
-    do  (e1, t1) <- verificaExpr tfuns tvars (IdVar id)
-        (e2, t2) <- verificaExpr tfuns tvars e
+verCmd tfuns tvars f (Atrib id e) =
+    do  (e1, t1) <- verExpr tfuns tvars (IdVar id)
+        (e2, t2) <- verExpr tfuns tvars e
 
         case (t1, t2) of
             (TInt,TInt) -> pure (Atrib id e2)
@@ -214,7 +214,7 @@ verificaComandos tfuns tvars f (Atrib id e) =
             (TVoid,_ ) -> erro("Atribuicao invalida na variável "++id++".\n") (Atrib id e2)
             (_,TVoid) -> erro("Atribuicao invalida na variável "++id++".\n") (Atrib id e2)
 
-verificaComandos tfuns tvars f (Ret e) =
+verCmd tfuns tvars f (Ret e) =
     case e of
         Nothing   -> do
             (i, argumentos_esperados, t1) <- recuperaFuncao tfuns f
@@ -223,7 +223,7 @@ verificaComandos tfuns tvars f (Ret e) =
 
         Just expr -> do
             (i, argumentos_esperados, t1) <- recuperaFuncao tfuns f
-            (e2, t2) <- verificaExpr tfuns tvars expr
+            (e2, t2) <- verExpr tfuns tvars expr
 
             case (t1, t2) of
                 (TInt,TInt) -> pure (Ret (Just expr))
@@ -236,17 +236,17 @@ verificaComandos tfuns tvars f (Ret e) =
                 (TVoid,_ ) -> erro("Tipo de retorno incompativel na função "++f++".\n") (Ret (Just expr))
                 (_,TVoid) -> erro("Tipo de retorno incompativel na função "++f++".\n") (Ret (Just expr))
 
-verificaComandos tfuns tvars f (Leitura id) =
-    do  (e, t) <- verificaExpr tfuns tvars (IdVar id)
+verCmd tfuns tvars f (Leitura id) =
+    do  (e, t) <- verExpr tfuns tvars (IdVar id)
         case e of
             IdVar w -> pure (Leitura w)
-verificaComandos tfuns tvars f (Imp e) =
-    do  (e', t) <- verificaExpr tfuns tvars e
+verCmd tfuns tvars f (Imp e) =
+    do  (e', t) <- verExpr tfuns tvars e
         pure (Imp e')
-verificaComandos tfuns tvars f (Proc id exprs) =
-    do  exprs' <- mapM (verificaExpr tfuns tvars) exprs
+verCmd tfuns tvars f (Proc id exprs) =
+    do  exprs' <- mapM (verExpr tfuns tvars) exprs
         (i, argumentos_esperados, t) <- recuperaFuncao tfuns id
-        argumentos_verificados <- verificaArgumentos f argumentos_esperados exprs'
+        argumentos_verificados <- verArgs f argumentos_esperados exprs'
         pure (Proc id argumentos_verificados)
 
 recuperaFuncao [] "main" = pure ("main",[],TVoid)
@@ -255,44 +255,46 @@ recuperaFuncao ((i:->:(args, t)):tfuns) id =
     if id == i then pure (i, args, t)
     else recuperaFuncao tfuns id
 
-verificaArgumentos fid [] [] = pure []
-verificaArgumentos fid [] _  = erro("Quantidade inválida de argumentos na função "++fid++".\n") []
-verificaArgumentos fid _ []  = erro("Quantidade inválida de argumentos na função "++fid++".\n") []
-verificaArgumentos fid ((i:#:t1):tvars) ((e,t2):exprs) =
+verArgs fid [] [] = pure []
+verArgs fid [] _  = erro("Quantidade inválida de argumentos na função "++fid++".\n") []
+verArgs fid _ []  = erro("Quantidade inválida de argumentos na função "++fid++".\n") []
+verArgs fid ((i:#:(t1, _)):tvars) ((e,t2):exprs) =
     case (t1, t2) of
-        (TInt,TInt) -> (:) e <$> verificaArgumentos fid tvars exprs
-        (TDouble, TDouble) -> (:) e <$> verificaArgumentos fid tvars exprs
-        (TString,TString) -> (:) e <$> verificaArgumentos fid tvars exprs
-        (TInt, TDouble) -> (:) <$> warning("Atribuicao de Double para Int na chamada da funcao "++fid++".\n") (DoubleInt e) <*> verificaArgumentos fid tvars exprs
-        (TDouble, TInt) -> (:) <$> warning("Atribuicao de Int para Double na chamada da funcao "++fid++".\n") (IntDouble e) <*> verificaArgumentos fid tvars exprs
-        (TString, _) -> (:) <$> erro("Atribuicao invalida na chamada da funcao "++fid++".\n") e <*> verificaArgumentos fid tvars exprs
-        (_,TString) -> (:) <$> erro("Atribuicao invalida na chamada da funcao "++fid++".\n") e <*> verificaArgumentos fid tvars exprs
-        (TVoid,_ ) -> (:) <$> erro("Atribuicao invalida na chamada da funcao "++fid++".\n") e <*> verificaArgumentos fid tvars exprs
-        (_,TVoid) -> (:) <$> erro("Atribuicao invalida na chamada da funcao "++fid++".\n") e <*> verificaArgumentos fid tvars exprs
+        (TInt,TInt) -> (:) e <$> verArgs fid tvars exprs
+        (TDouble, TDouble) -> (:) e <$> verArgs fid tvars exprs
+        (TString,TString) -> (:) e <$> verArgs fid tvars exprs
+        (TInt, TDouble) -> (:) <$> warning("Atribuicao de Double para Int na chamada da funcao "++fid++".\n") (DoubleInt e) <*> verArgs fid tvars exprs
+        (TDouble, TInt) -> (:) <$> warning("Atribuicao de Int para Double na chamada da funcao "++fid++".\n") (IntDouble e) <*> verArgs fid tvars exprs
+        (TString, _) -> (:) <$> erro("Atribuicao invalida na chamada da funcao "++fid++".\n") e <*> verArgs fid tvars exprs
+        (_,TString) -> (:) <$> erro("Atribuicao invalida na chamada da funcao "++fid++".\n") e <*> verArgs fid tvars exprs
+        (TVoid,_ ) -> (:) <$> erro("Atribuicao invalida na chamada da funcao "++fid++".\n") e <*> verArgs fid tvars exprs
+        (_,TVoid) -> (:) <$> erro("Atribuicao invalida na chamada da funcao "++fid++".\n") e <*> verArgs fid tvars exprs
 
-verificaBloco tfuns (fid, tvars, comandos) =
+verBloco tfuns (fid, tvars, comandos) =
     do
         (i, args, t) <- recuperaFuncao tfuns fid
-        do  verificaVariaveisDuplicadas (tvars++args)
-            cmds <- mapM (verificaComandos tfuns (tvars++args) fid) comandos
+        do  verVariaveisDuplicadas (tvars++args)
+            cmds <- mapM (verCmd tfuns (tvars++args) fid) comandos
             pure (fid, tvars, cmds)
 
 existeVar a [] = False
-existeVar a ((id :#: t):tvars) = a == id || existeVar a tvars
+existeVar a ((id :#: (t, _)):tvars) = a == id || existeVar a tvars
 
-verificaVariaveisDuplicadas [] = pure ()
-verificaVariaveisDuplicadas ((id :#: t):tvars) = if existeVar id tvars then erro ("Variável "++id++" duplicadas.\n") () else verificaVariaveisDuplicadas tvars
+verVariaveisDuplicadas [] = pure ()
+verVariaveisDuplicadas ((id :#: (t, _)):tvars) = if existeVar id tvars then erro ("Variável "++id++" duplicadas.\n") () else verVariaveisDuplicadas tvars
 
 existeFuncao a [] = False
 existeFuncao a ((id :->: (var:vs,t)):fs) = a == id || existeFuncao a fs
 
-verificaFuncoesDuplicadas [] = pure ()
-verificaFuncoesDuplicadas ((id :->: (var:vs,t)):fs) = if existeFuncao id fs then erro ("Função "++id++" duplicada.\n") () else verificaFuncoesDuplicadas fs
+verFuncoesDuplicadas [] = pure ()
+verFuncoesDuplicadas ((id :->: (var:vs,t)):fs) = if existeFuncao id fs then erro ("Função "++id++" duplicada.\n") () else verFuncoesDuplicadas fs
 
+definePos _ [] = []
+definePos n (i:#:(t,_):vs) = (i:#:(t,n)):if t == TDouble then definePos (n+2) vs else definePos (n+1) vs 
 
-verificaPrograma (Prog tfuns funcoes var_principal bloco_principal) =
+verProg (Prog tfuns funcoes var_principal bloco_principal) =
     do
-        verificaFuncoesDuplicadas tfuns
-        fs <- mapM (verificaBloco tfuns) funcoes
-        (fid, tvars, bloco) <- verificaBloco tfuns ("main", var_principal, bloco_principal)
-        pure (Prog tfuns fs var_principal bloco)
+        verFuncoesDuplicadas tfuns
+        fs <- mapM (verBloco tfuns) funcoes
+        (fid, tvars, bloco) <- verBloco tfuns ("main", var_principal, bloco_principal)
+        pure (Prog tfuns fs (definePos 1 var_principal) bloco)

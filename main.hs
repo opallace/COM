@@ -6,6 +6,7 @@ import Text.Parsec.Language
 import ModuleDataTypes
 import ModulePrograma
 import ModuleSemantic
+import GenBytecode
 
 partida :: Parsec String u Programa
 partida = do {e <- programa; eof; return e}
@@ -14,11 +15,11 @@ parserE   = runParser partida [] "Programa"
 
 parserExpr s = case parserE s of
                     Left er -> print er
-                    Right s -> case verificaPrograma s of
+                    Right s -> case verProg s of
                                     MS(erro, prog) -> do putStr erro
-                                                         print prog
+                                                         putStr (gerar "wallace" prog)
 
 main = do 
-          e <- readFile "teste.txt"
+          e <- readFile "testeAlo.j--"
           putStr "Arquivo: "
           parserExpr e

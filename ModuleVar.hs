@@ -19,14 +19,14 @@ declaracao_var = do {
                 t <- tipo;
                 i <- commaSep identifier;
                 reserved ";";
-                return (map (:#: t) i)
+                return (map (:#: (t, 0)) i)
               }
        <?> "expression"
 
 declaracao_parametros = do {
                 t <- tipo;
                 i <- identifier;
-                return (i :#: t)
+                return (i :#: (t, 0))
               }
        <?> "expression"
        
