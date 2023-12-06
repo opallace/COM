@@ -1,0 +1,70 @@
+.class public Wallace
+.super java/lang/Object
+
+.method public <init>()V
+	aload_0
+	invokenonvirtual java/lang/Object/<init>()V
+	return
+.end method
+
+.method public static main([Ljava/lang/String;)V
+	.limit stack 4
+	.limit locals 8
+
+	getstatic java/lang/System/out Ljava/io/PrintStream;
+	ldc "fatorial:"
+	invokevirtual java/io/PrintStream/println(Ljava/lang/String;)V
+	getstatic java/lang/System/out Ljava/io/PrintStream;
+	bipush 6
+	invokestatic Wallace/fat(I)I
+	invokevirtual java/io/PrintStream/println(I)V
+	bipush 100
+	istore 1
+	iload 1
+	ldc2_w 2.5
+	d2i
+	invokestatic Wallace/maior(II)I
+	istore 1
+	getstatic java/lang/System/out Ljava/io/PrintStream;
+	iload 1
+	invokevirtual java/io/PrintStream/println(I)V
+	return
+.end method
+
+.method public static fat(I)I
+	 .limit stack 4
+	 .limit locals 8
+
+	iload 0
+	iconst_0
+	if_icmpeq l0
+	goto l1
+l0:
+	iconst_1
+	ireturn
+l1:
+	iload 0
+	iload 0
+	iconst_1
+	isub
+	invokestatic Wallace/fat(I)I
+	imul
+	ireturn
+.end method
+
+.method public static maior(II)I
+	 .limit stack 4
+	 .limit locals 8
+
+	iload 0
+	iload 1
+	if_icmpgt l3
+	goto l4
+l3:
+	iload 0
+	ireturn
+l4:
+	iload 1
+	ireturn
+.end method
+

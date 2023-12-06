@@ -39,14 +39,14 @@ comando =   do{
                 b <- braces bloco;
                 return([a1,While el (b++[a2])])
               }
-        <|> do{
+        <|> try(do{
                 reserved "if";
                 e  <- parens exprL;
                 b1 <- braces bloco;
                 reserved "else";
                 b2 <- braces bloco;
                 return[(If e b1 b2)]
-              }
+              })
         <|>do{
                 reserved "if";
                 e  <- parens exprL;

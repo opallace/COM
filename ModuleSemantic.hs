@@ -275,7 +275,7 @@ verBloco tfuns (fid, tvars, comandos) =
         (i, args, t) <- recuperaFuncao tfuns fid
         do  verVariaveisDuplicadas (tvars++args)
             cmds <- mapM (verCmd tfuns (tvars++args) fid) comandos
-            pure (fid, tvars, cmds)
+            pure (fid, definePos 0 (args++tvars), cmds)
 
 existeVar a [] = False
 existeVar a ((id :#: (t, _)):tvars) = a == id || existeVar a tvars
@@ -290,11 +290,11 @@ verFuncoesDuplicadas [] = pure ()
 verFuncoesDuplicadas ((id :->: (var:vs,t)):fs) = if existeFuncao id fs then erro ("Função "++id++" duplicada.\n") () else verFuncoesDuplicadas fs
 
 definePos _ [] = []
-definePos n (i:#:(t,_):vs) = (i:#:(t,n)):if t == TDouble then definePos (n+2) vs else definePos (n+1) vs 
+definePos n ((i:#:(t,_)):vs) = (i:#:(t, n)):if t == TDouble then definePos (n+2) vs else definePos (n+1) vs 
 
 verProg (Prog tfuns funcoes var_principal bloco_principal) =
     do
         verFuncoesDuplicadas tfuns
         fs <- mapM (verBloco tfuns) funcoes
         (fid, tvars, bloco) <- verBloco tfuns ("main", var_principal, bloco_principal)
-        pure (Prog tfuns fs (definePos 1 var_principal) bloco)
+        pure(Prog tfuns fs (definePos 1 var_principal) bloco)

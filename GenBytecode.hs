@@ -5,15 +5,17 @@ import ModuleDataTypes
 
 
 infoVar [] s = error $ "posVar: Variavel " ++ s ++ " nao declarada\n" 
-infoVar (i:#:tp:vs) s = if i == s then tp else  infoVar vs s
+infoVar ((i:#:tp):vs) s = if i == s then tp else  infoVar vs s
 
 tipoFun [] s = error $ "Funcao " ++ s ++ " nao declarada\n"
 tipoFun (i:->: (ps, t):fs) s = if i == s then  t else tipoFun fs s
 
+definePos _ [] = []
+definePos n ((i:#:(t,_)):vs) = (i:#:(t, n)):if t == TDouble then definePos (n+2) vs else definePos (n+1) vs 
 
 genInt i | i < 6 = "\ticonst_" ++ show i ++ "\n"
          | i < 128 = "\tbipush " ++ show i ++ "\n"
-		 | otherwise = "\tldc " ++ show i ++ "\n"
+         | otherwise = "\tldc " ++ show i ++ "\n"
  
 genOp TInt   s  = "\ti" ++ s ++ "\n"
 genOp TDouble s = "\td" ++ s ++ "\n"
@@ -43,16 +45,34 @@ genMainCab s l = return (".method public static main([Ljava/lang/String;)V" ++
                          "\n\t.limit locals " ++ show l ++ "\n\n")
 
 genProg nome (Prog fun cfun tab b) = do c <- genCab nome 
-                                        mc <- genMainCab 4 4 
+                                        mc <- genMainCab 4 8
+                                        f <- mapM (genFunc fun) cfun
                                         b' <- genBloco tab fun b
-                                        return (c++mc++b'++"\n.end method\n")
+                                        return (c++mc++b'++".end method\n\n"++(concat f))
+                                        
 genBloco tab fun b = do {b' <- mapM (genCmd tab fun) b; return (concat b')} 
 
 
-genRel TDouble TDouble l s = "\tdcmpl\n\tif"++s++" "++l++"\n"	
+recuperaTipoArgsFunc [] = []
+recuperaTipoArgsFunc ((ivar :#: (tvar,_)):args) = tvar:(recuperaTipoArgsFunc args)
+
+recuperaFuncao ((i:->:(args, t)):tfuns) id =
+    if id == i then pure(i, args, t)
+    else recuperaFuncao tfuns id
+
+genFunc tfun (fid, tvars, comandos) = 
+    do {
+        (i, args, t) <- recuperaFuncao tfun fid;
+        b' <- genBloco tvars tfun comandos;
+        
+        return(".method public static " ++ fid ++ "("++ genArgs (recuperaTipoArgsFunc args) ++")" ++ tipoArg t ++ "\n\t .limit stack 4\n\t .limit locals 8\n\n" ++ b' ++ ".end method\n\n")
+    }
+
+
+genRel TDouble TDouble l s = "\tdcmpl\n\tif"++s++" "++l++"\n"
 genRel TInt    TInt l s    = "\tif_icmp"++s++" "++l++"\n"
 genRel TString TString l s = if s == "eq" || s == "ne" then "\tif_acmp"++s++" "++l++"\n" else error ("genRel:Comparacao invalida com strings\n")
-genRel _ _ _ _             = error "genRel: Comparacao nao implementada" 
+genRel _ _ _ _             = error "genRel: Comparacao nao implementada"
 
 
 genExprR tab fun v f (e1:==:e2) = do {(t1, e1') <- genExpr tab fun e1; (t2,e2') <- genExpr tab fun e2; return (e1'++e2'++genRel t1 t2 v "eq"++"\tgoto "++f++"\n")}  
@@ -73,7 +93,37 @@ genExprL tab fun v f (Not e)   = do {e' <- genExprL tab fun f v e; return e'}
 genExprL tab fun v f (Rel e)   = do {e' <- genExprR tab fun v f e; return e'}
 
 
+genCmd tab fun (DoWhile e b) = do {
+    li <- novoLabel; 
+    lv <- novoLabel; 
+    lf <- novoLabel; 
+    
+    e' <- genExprL tab fun lv lf e; 
+    b' <- genBloco tab fun b; 
+
+    return (lv++":\n"++b'++e'++lf++":\n")
+}
 genCmd tab fun (While e b) = do {li <- novoLabel; lv <- novoLabel; lf <- novoLabel; e' <- genExprL tab fun lv lf e; b' <- genBloco tab fun b; return (li++":\n"++e'++lv++":\n"++b'++"\tgoto "++li++"\n"++lf++":\n")}
+genCmd tab fun (If el b1 b2) = 
+    do {
+            lv <- novoLabel; 
+            lf <- novoLabel;
+            le <- novoLabel;
+
+            e' <- genExprL tab fun lv lf el; 
+
+            b1' <- genBloco tab fun b1;
+            b2' <- genBloco tab fun b2;
+
+            if b2' == [] then return(e' ++ lv ++ ":\n" ++ b1' ++ lf ++ ":\n")
+            else return(e'++ lv ++ ":\n" ++ b1' ++ "\tgoto " ++ le ++ "\n" ++ lf ++ ":\n" ++ b2' ++ le ++ ":\n")
+
+        }
+genCmd tab fun (Proc i es) = 
+    do {
+        es' <- mapM (genExpr tab fun) es; 
+        return (concat (map snd es') ++ "\tinvokestatic Wallace/"++i++"("++genArgs (map fst es')++")"++tipoArg (tipoFun fun i) ++ "\n")
+    } 
 genCmd tab fun (Atrib i e) = do {(tr, e') <- genExpr tab fun e; let (tl, pos) = infoVar tab i in return (e' ++ genAtrib tl tr pos)}
 genCmd tab fun (Imp e) = do {(t, e') <- genExpr tab fun e; return ("\tgetstatic java/lang/System/out Ljava/io/PrintStream;\n" ++ e' ++ "\tinvokevirtual java/io/PrintStream/println(" ++ tipoArg t ++")V\n")} 
 genCmd tab fun (Ret Nothing)  = return "\treturn\n"
@@ -87,17 +137,10 @@ genExpr tab fun (Lit s) = return (TString, "\tldc " ++ "\"" ++ s ++ "\"" ++ "\n"
 genExpr tab fun (IntDouble e) = do {(_, e') <- genExpr tab fun e; return (TDouble, e' ++ "\ti2d\n")}
 genExpr tab fun (DoubleInt e) = do {(_, e') <- genExpr tab fun e; return (TInt, e' ++ "\td2i\n")}   
 genExpr tab fun (Neg e) = do {(t, e') <- genExpr tab fun e; return (t, genOp t "neg")}
-genExpr tab fun (Chamada i es) = do {es' <- mapM (genExpr tab fun) es; return (tipoFun fun i, concat (map snd es') ++ "\tinvokestatic "++i++"("++genArgs (map fst es')++")"++tipoArg (tipoFun fun i) ++ "\n")} 
+genExpr tab fun (Chamada i es) = do {es' <- mapM (genExpr tab fun) es; return (tipoFun fun i, concat (map snd es') ++ "\tinvokestatic Wallace/"++i++"("++genArgs (map fst es')++")"++tipoArg (tipoFun fun i) ++ "\n")} 
 genExpr tab fun (e1 :+: e2) = do {(t1, e1') <- genExpr tab fun e1; (t2, e2') <- genExpr tab fun e2; return (t1, e1' ++ e2' ++ genOp t1 "add")}
 genExpr tab fun (e1 :-: e2) = do {(t1, e1') <- genExpr tab fun e1; (t2, e2') <- genExpr tab fun e2; return (t1, e1' ++ e2' ++ genOp t1 "sub")}
 genExpr tab fun (e1 :*: e2) = do {(t1, e1') <- genExpr tab fun e1; (t2, e2') <- genExpr tab fun e2; return (t1, e1' ++ e2' ++ genOp t1 "mul")}
 genExpr tab fun (e1 :/: e2) = do {(t1, e1') <- genExpr tab fun e1; (t2, e2') <- genExpr tab fun e2; return (t1, e1' ++ e2' ++ genOp t1 "div")}
 
 gerar nome p = fst $ runState (genProg nome p) 0 
-
-tab  = ["x":#:(TDouble, 1), "a":#:(TInt, 3)]
-tfun = ["maior" :->: (["a":#:(TInt, 0), "b":#:(TInt, 0)], TInt)]
- 
-e1 = (IdVar "x" :+: ((Const (CDouble 2)) :*: IntDouble (IdVar "a")))
-e2 = (IdVar "x" :+: IntDouble (Chamada "maior" [(Const (CInt 1)), IdVar "a"]))
-e3 = (IdVar "a" :+: Chamada "maior" [(Const (CInt 1)), IdVar "a"])

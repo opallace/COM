@@ -16,10 +16,11 @@ parserE   = runParser partida [] "Programa"
 parserExpr s = case parserE s of
                     Left er -> print er
                     Right s -> case verProg s of
-                                    MS(erro, prog) -> do putStr erro
-                                                         putStr (gerar "wallace" prog)
+                                    MS(erro, prog) -> do {
+                                                            putStr erro;
+                                                            writeFile "Wallace.k7" (gerar "Wallace" prog);
+                                                        }
 
 main = do 
-          e <- readFile "testeAlo.j--"
-          putStr "Arquivo: "
+          e <- readFile "entrada.k7"
           parserExpr e
